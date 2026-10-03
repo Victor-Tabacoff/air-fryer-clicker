@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Fryer Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: #764ba2;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .fryer-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: none;
+            font-size: 80px;
+            cursor: pointer;
+            margin: 30px auto;
+            transition: transform 0.1s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fryer-button:hover {
+            transform: scale(1.05);
+        }
+
+        .fryer-button:active {
+            transform: scale(0.95);
+        }
+
+        .upgrades {
+            margin-top: 30px;
+        }
+
+        .upgrades-title {
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .upgrade-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+            font-weight: bold;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            background: #5568d3;
+        }
+
+        .upgrade-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .upgrade-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .floating-text {
+            position: fixed;
+            pointer-events: none;
+            font-weight: bold;
+            color: #764ba2;
+            font-size: 1.5em;
+            z-index: 1000;
+        }
+
+        .reset-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍟 Air Fryer Clicker</h1>
+        <p class="subtitle">Click the air fryer to earn points!</p>
+
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Points:</span>
+                <span class="stat-value" id="points">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Per Click:</span>
+                <span class="stat-value" id="perClick">1</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Per Second:</span>
+                <span class="stat-value" id="perSecond">0</span>
+            </div>
+        </div>
+
+        <button class="fryer-button" id="fryerBtn">🌡️</button>
+
+        <div class="upgrades">
+            <div class="upgrades-title">Upgrades</div>
+            <button class="upgrade-btn" id="clickPower">
+                👆 Click Power
+                <div class="upgrade-info">Cost: <span id="clickPowerCost">10</span></div>
+            </button>
+            <button class="upgrade-btn" id="autoFryer">
+                ⚙️ Auto Fryer
+                <div class="upgrade-info">Cost: <span id="autoFryerCost">50</span></div>
+            </button>
+            <button class="upgrade-btn" id="multiClick">
+                🔀 Multi-Click
+                <div class="upgrade-info">Cost: <span id="multiClickCost">200</span></div>
+            </button>
+            <button class="upgrade-btn" id="megaFryer">
+                💥 Mega Fryer
+                <div class="upgrade-info">Cost: <span id="megaFryerCost">500</span></div>
+            </button>
+        </div>
+
+        <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <script>
+        // Game state
+        let game = {
+            points: 0,
+            clickPower: 1,
+            autoFryerRate: 0,
+            multiClickCount: 1,
+            megaFryerMultiplier: 1,
+            
+            upgrades: {
+                clickPower: { cost: 10, owned: 0 },
+                autoFryer: { cost: 50, owned: 0, ratePerSecond: 1 },
+                multiClick: { cost: 200, owned: 0, clicksPerClick: 2 },
+                megaFryer: { cost: 500, owned: 0, multiplier: 2 }
+            }
+        };
+
+        // Load game state from localStorage
+        function loadGame() {
+            const saved = localStorage.getItem('airFryerGame');
+            if (saved) {
+                game = JSON.parse(saved);
+            }
+        }
+
+        // Save game state
+        function saveGame() {
+            localStorage.setItem('airFryerGame', JSON.stringify(game));
+        }
+
+        // Click the fryer
+        document.getElementById('fryerBtn').addEventListener('click', function() {
+            const clickValue = game.clickPower * game.multiClickCount * game.megaFryerMultiplier;
+            game.points += clickValue;
+            
+            // Create floating text
+            createFloatingText(event, `+${clickValue}`);
+            
+            updateDisplay();
+            saveGame();
+        });
+
+        // Upgrade: Click Power
+        document.getElementById('clickPower').addEventListener('click', function() {
+            const cost = game.upgrades.clickPower.cost;
+            if (game.points >= cost) {
+                game.points -= cost;
+                game.upgrades.clickPower.owned++;
+                game.clickPower += 1;
+                game.upgrades.clickPower.cost = Math.floor(10 * Math.pow(1.15, game.upgrades.clickPower.owned));
+                updateDisplay();
+                saveGame();
+            }
+        });
+
+        // Upgrade: Auto Fryer
+        document.getElementById('autoFryer').addEventListener('click', function() {
+            const cost = game.upgrades.autoFryer.cost;
+            if (game.points >= cost) {
+                game.points -= cost;
+                game.upgrades.autoFryer.owned++;
+                game.autoFryerRate += game.upgrades.autoFryer.ratePerSecond;
+                game.upgrades.autoFryer.cost = Math.floor(50 * Math.pow(1.15, game.upgrades.autoFryer.owned));
+                updateDisplay();
+                saveGame();
+            }
+        });
+
+        // Upgrade: Multi-Click
+        document.getElementById('multiClick').addEventListener('click', function() {
+            const cost = game.upgrades.multiClick.cost;
+            if (game.points >= cost) {
+                game.points -= cost;
+                game.upgrades.multiClick.owned++;
+                game.multiClickCount = 1 + (game.upgrades.multiClick.owned * game.upgrades.multiClick.clicksPerClick);
+                game.upgrades.multiClick.cost = Math.floor(200 * Math.pow(1.15, game.upgrades.multiClick.owned));
+                updateDisplay();
+                saveGame();
+            }
+        });
+
+        // Upgrade: Mega Fryer
+        document.getElementById('megaFryer').addEventListener('click', function() {
+            const cost = game.upgrades.megaFryer.cost;
+            if (game.points >= cost) {
+                game.points -= cost;
+                game.upgrades.megaFryer.owned++;
+                game.megaFryerMultiplier = Math.pow(game.upgrades.megaFryer.multiplier, game.upgrades.megaFryer.owned);
+                game.upgrades.megaFryer.cost = Math.floor(500 * Math.pow(1.15, game.upgrades.megaFryer.owned));
+                updateDisplay();
+                saveGame();
+            }
+        });
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('points').textContent = Math.floor(game.points);
+            document.getElementById('perClick').textContent = (game.clickPower * game.multiClickCount * game.megaFryerMultiplier).toFixed(1);
+            document.getElementById('perSecond').textContent = game.autoFryerRate.toFixed(1);
+
+            // Update upgrade buttons
+            document.getElementById('clickPowerCost').textContent = game.upgrades.clickPower.cost;
+            document.getElementById('autoFryerCost').textContent = game.upgrades.autoFryer.cost;
+            document.getElementById('multiClickCost').textContent = game.upgrades.multiClick.cost;
+            document.getElementById('megaFryerCost').textContent = game.upgrades.megaFryer.cost;
+
+            // Disable buttons if not enough points
+            document.getElementById('clickPower').disabled = game.points < game.upgrades.clickPower.cost;
+            document.getElementById('autoFryer').disabled = game.points < game.upgrades.autoFryer.cost;
+            document.getElementById('multiClick').disabled = game.points < game.upgrades.multiClick.cost;
+            document.getElementById('megaFryer').disabled = game.points < game.upgrades.megaFryer.cost;
+        }
+
+        // Create floating text effect
+        function createFloatingText(event, text) {
+            const floatingText = document.createElement('div');
+            floatingText.className = 'floating-text';
+            floatingText.textContent = text;
+            floatingText.style.left = event.clientX + 'px';
+            floatingText.style.top = event.clientY + 'px';
+            document.body.appendChild(floatingText);
+
+            // Animate and remove
+            let opacity = 1;
+            let y = 0;
+            const interval = setInterval(() => {
+                y -= 2;
+                opacity -= 0.03;
+                floatingText.style.transform = `translateY(${y}px)`;
+                floatingText.style.opacity = opacity;
+
+                if (opacity <= 0) {
+                    clearInterval(interval);
+                    floatingText.remove();
+                }
+            }, 30);
+        }
+
+        // Auto fryer passive income
+        setInterval(() => {
+            if (game.autoFryerRate > 0) {
+                game.points += game.autoFryerRate;
+                updateDisplay();
+                saveGame();
+            }
+        }, 1000);
+
+        // Reset game
+        function resetGame() {
+            if (confirm('Are you sure you want to reset your progress?')) {
+                localStorage.removeItem('airFryerGame');
+                location.reload();
+            }
+        }
+
+        // Initialize
+        loadGame();
+        updateDisplay();
+    </script>
+</body>
+</html>
